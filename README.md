@@ -5,7 +5,7 @@ An extensible do-anything telegram bot.
 
 Simply create a new package, and in that package implement the `core.Command` interface and away you go! Note that `Description()` will appear in any menus as the text.
 
-Although it's not part of the interface, it is highly recommended to have a `New` function for your command, so that you can give it any state (such as an API token).
+Although it's not part of the interface, it is highly recommended to have a `New` function for your command, so that you can give it any state it may need (such as an API token).
 
 ### Commands with Inline Keyboards
 
