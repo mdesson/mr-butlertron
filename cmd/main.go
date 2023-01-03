@@ -22,8 +22,9 @@ func init() {
 	// init bot
 	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	pref := telebot.Settings{
-		Token:  telegramToken,
-		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+		Token:     telegramToken,
+		Poller:    &telebot.LongPoller{Timeout: 10 * time.Second},
+		ParseMode: telebot.ModeMarkdown,
 	}
 	bot, err := telebot.NewBot(pref)
 	if err != nil {

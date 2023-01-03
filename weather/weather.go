@@ -2,7 +2,6 @@ package weather
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
@@ -112,10 +111,9 @@ type weatherData struct {
 
 // The Weather Command
 type Weather struct {
-	token         string
-	butlertron    *core.Butlertron
-	selector      *telebot.ReplyMarkup
-	cachedWeather weatherData
+	token      string
+	butlertron *core.Butlertron
+	selector   *telebot.ReplyMarkup
 }
 
 func New(token string, butlertron *core.Butlertron) *Weather {
@@ -164,7 +162,13 @@ func (w *Weather) Execute(c telebot.Context) error {
 		return c.Send("Sorry, something went wrong fetching your weather for you!")
 	}
 	msg := currentConditionString(data)
-	w.cachedWeather = data
+
+	// add or remove weather alert inline button, as needed
+	if data.Alerts != nil {
+		w.selector = w.butlertron.RegisterInlineKeyboard(inlineHandlers)
+	} else {
+		w.selector = w.butlertron.RegisterInlineKeyboard(inlineHandlers[:1])
+	}
 
 	return c.Send(msg, w.selector)
 }
@@ -177,11 +181,5 @@ func currentConditionString(d weatherData) string {
 	s += fmt.Sprintf("🌡️ feels like %.1f°C (actual %.1f°C)\n", d.Current.FeelsLike, d.Current.Temp)
 	s += fmt.Sprintf("🌬️ %.2f km/h", d.Current.WindSpeed)
 
-	if d.Alerts != nil {
-		for _, alert := range d.Alerts {
-			s += "\n\n"
-			s += fmt.Sprintf("🚨 %s Alert 🚨\n%s\n", strings.Title(alert.Event), alert.Description)
-		}
-	}
 	return s
 }

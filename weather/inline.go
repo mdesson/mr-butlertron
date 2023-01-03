@@ -2,13 +2,12 @@ package weather
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
 )
-
-// TODO: (inline) Minutely precipitation
 
 var inlineHandlers = [][]core.InlineCommand{
 	{
@@ -25,42 +24,20 @@ var inlineHandlers = [][]core.InlineCommand{
 	},
 	{
 		core.InlineCommand{
-			Name:        "precipitation-weather",
-			Description: "💧 rain next hour",
-			Handler:     PrecipitationHandler,
+			Name:        "alert-weather",
+			Description: "🚨 Weather Alert 🚨",
+			Handler:     AlertHandler,
+			Conditional: true,
 		},
 	},
 }
 
 // Inline Keyboard Handlers
 func WeeklyHandler(c telebot.Context) error {
-	// Get variables from context
-	loc, ok := c.Get("location").(*telebot.Location)
-	if !ok {
-		fmt.Println("Couldn't cast location middleware result to location type")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	if loc == nil {
-		return c.Send("Please share your location to get the weather.")
-	}
-
-	token, ok := c.Get("token").(string)
-	if !ok {
-		fmt.Println("Couldn't cast token middleware result to string")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	if token == "" {
-		fmt.Println("weather token wasn't set")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	// get latest weather data
-	data, err := getWeather(loc, token)
+	data, err := getWeatherForInline(c)
 	if err != nil {
 		fmt.Println(err)
-		return c.Send("Sorry, something went wrong")
+		return c.Send("sorry, something went wrong")
 	}
 
 	// format and return response
@@ -70,7 +47,7 @@ func WeeklyHandler(c telebot.Context) error {
 		weather := day.Weather[0]
 		emoji := conditionIDToEmoji(weather.ID)
 
-		msg += fmt.Sprintf("%s %s: %s\n", emoji, weekday, weather.Description)
+		msg += fmt.Sprintf("%s *%s*: %s\n", emoji, weekday, weather.Description)
 		msg += fmt.Sprintf("☀ %.1f°C (feels like %.1f°C)\n", day.Temp.Day, day.FeelsLike.Day)
 		msg += fmt.Sprintf("🌙 %.1f°C (feels like %.1f°C)\n", day.Temp.Eve, day.FeelsLike.Night)
 		msg += "\n"
@@ -79,33 +56,10 @@ func WeeklyHandler(c telebot.Context) error {
 }
 
 func HourlyHandler(c telebot.Context) error {
-	// Get variables from context
-	loc, ok := c.Get("location").(*telebot.Location)
-	if !ok {
-		fmt.Println("Couldn't cast location middleware result to location type")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	if loc == nil {
-		return c.Send("Please share your location to get the weather.")
-	}
-
-	token, ok := c.Get("token").(string)
-	if !ok {
-		fmt.Println("Couldn't cast token middleware result to string")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	if token == "" {
-		fmt.Println("weather token wasn't set")
-		return c.Send("Sorry, something went wrong")
-	}
-
-	// get latest weather data
-	data, err := getWeather(loc, token)
+	data, err := getWeatherForInline(c)
 	if err != nil {
 		fmt.Println(err)
-		return c.Send("Sorry, something went wrong")
+		return c.Send("sorry, something went wrong")
 	}
 
 	// format and return response
@@ -115,15 +69,56 @@ func HourlyHandler(c telebot.Context) error {
 		weather := hour.Weather[0]
 		emoji := conditionIDToEmoji(weather.ID)
 
-		msg += localTime + "\n"
+		msg += fmt.Sprintf("*%s*\n", localTime)
 		msg += fmt.Sprintf("%s %s\n", emoji, weather.Description)
 		msg += fmt.Sprintf("🌡 %.1f°C (feels like %.1f°C)\n", hour.Temp, hour.FeelsLike)
+		msg += fmt.Sprintf("💧 %.1fmm\n", hour.Pop)
 		msg += fmt.Sprintf("🌬️ %.2f km/h\n", hour.WindSpeed)
 		msg += "\n"
 	}
 	return c.Send(msg)
 }
 
-func PrecipitationHandler(c telebot.Context) error {
-	return c.Send("Bazz Hands!")
+func AlertHandler(c telebot.Context) error {
+	data, err := getWeatherForInline(c)
+	if err != nil {
+		fmt.Println(err)
+		return c.Send("sorry, something went wrong")
+	}
+
+	msg := ""
+	for _, alert := range data.Alerts {
+		msg += "\n\n"
+		msg += fmt.Sprintf("🚨 %s Alert 🚨\n%s\n", strings.Title(alert.Event), alert.Description)
+	}
+
+	return c.Send(msg)
+}
+
+func getWeatherForInline(c telebot.Context) (weatherData, error) {
+	// Get variables from context
+	loc, ok := c.Get("location").(*telebot.Location)
+	if !ok {
+		return weatherData{}, fmt.Errorf("Couldn't cast location middleware result to location type")
+	}
+
+	if loc == nil {
+		return weatherData{}, fmt.Errorf("Please share your location to get the weather.")
+	}
+
+	token, ok := c.Get("token").(string)
+	if !ok {
+		return weatherData{}, fmt.Errorf("Couldn't cast token middleware result to string")
+	}
+
+	if token == "" {
+		return weatherData{}, fmt.Errorf("weather token wasn't set")
+	}
+
+	// get latest weather data
+	data, err := getWeather(loc, token)
+	if err != nil {
+		return weatherData{}, err
+	}
+	return data, nil
 }
