@@ -28,16 +28,14 @@ var inlineHandlers = [][]core.InlineCommand{
 }
 
 // Inline Keyboard Handlers
-var (
-// Foo sends the word foo
-)
-
 func FooHandler(c telebot.Context) error {
 	return c.Send("Fooey!")
 }
+
 func BarHandler(c telebot.Context) error {
 	return c.Send("Babar!")
 }
+
 func BazHandler(c telebot.Context) error {
 	return c.Send("Bazz Hands!")
 }
