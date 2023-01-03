@@ -5,41 +5,41 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-// TODO: (inline) Minutely precipitation
-// TODO: (inline) Hourly forecast
 // TODO: (inline) Daily forecast
+// TODO: (inline) Hourly forecast
+// TODO: (inline) Minutely precipitation
 
 var inlineHandlers = [][]core.InlineCommand{
 	{
 		core.InlineCommand{
-			Name:        "foo",
-			Description: "🔧 foo",
-			Handler:     FooHandler,
+			Name:        "weekly-weather",
+			Description: "📆 weekly",
+			Handler:     WeeklyHandler,
 		},
 		core.InlineCommand{
-			Name:        "bar",
-			Description: "🔨 bar",
-			Handler:     BarHandler,
+			Name:        "hourly-weather",
+			Description: "⌚ next 48h",
+			Handler:     HourlyHandler,
 		},
 	},
 	{
 		core.InlineCommand{
-			Name:        "baz",
-			Description: "🪛 baz",
-			Handler:     BazHandler,
+			Name:        "precipitation-weather",
+			Description: "💧 rain next hour",
+			Handler:     PrecipitationHandler,
 		},
 	},
 }
 
 // Inline Keyboard Handlers
-func FooHandler(c telebot.Context) error {
+func WeeklyHandler(c telebot.Context) error {
 	return c.Send("Fooey!")
 }
 
-func BarHandler(c telebot.Context) error {
+func HourlyHandler(c telebot.Context) error {
 	return c.Send("Babar!")
 }
 
-func BazHandler(c telebot.Context) error {
+func PrecipitationHandler(c telebot.Context) error {
 	return c.Send("Bazz Hands!")
 }
