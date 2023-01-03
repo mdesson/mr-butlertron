@@ -2,6 +2,7 @@ package weather
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,10 +11,15 @@ import (
 )
 
 func getWeather(loc *telebot.Location, token string) (weatherData, error) {
-	url := fmt.Sprintf("https://api.openweathermap.org/data/3.0/onecall?units=metric&lat=%.2f&lon=%.2f&exclude=hourly,daily&appid=%s", loc.Lat, loc.Lng, token)
+	url := fmt.Sprintf("https://api.openweathermap.org/data/3.0/onecall?units=metric&lat=%.2f&lon=%.2f&appid=%s", loc.Lat, loc.Lng, token)
 	res, err := http.Get(url)
 	if err != nil {
 		return weatherData{}, err
+	}
+
+	if res.StatusCode >= 300 {
+		msg := fmt.Sprintf("Weather request failed with code %d", res.StatusCode)
+		return weatherData{}, errors.New(msg)
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)

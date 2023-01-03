@@ -32,3 +32,10 @@ func (w *Location) Execute(c telebot.Context) error {
 	msg := fmt.Sprintf("Updated your location to %v, %v.", loc.Lat, loc.Lng)
 	return c.Send(msg)
 }
+
+func (l *Location) LocationMiddleware(next telebot.HandlerFunc) telebot.HandlerFunc {
+	return func(c telebot.Context) error {
+		c.Set("location", l.butlertron.Location)
+		return next(c)
+	}
+}

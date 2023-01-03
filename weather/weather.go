@@ -57,7 +57,7 @@ type weatherData struct {
 			Description string `json:"description"`
 			Icon        string `json:"icon"`
 		} `json:"weather"`
-		Pop  int `json:"pop"`
+		Pop  float64 `json:"pop"`
 		Rain struct {
 			OneH float64 `json:"1h"`
 		} `json:"rain,omitempty"`
@@ -96,7 +96,7 @@ type weatherData struct {
 			Icon        string `json:"icon"`
 		} `json:"weather"`
 		Clouds int     `json:"clouds"`
-		Pop    int     `json:"pop"`
+		Pop    float64 `json:"pop"`
 		Rain   float64 `json:"rain,omitempty"`
 		Uvi    float64 `json:"uvi"`
 	} `json:"daily"`
@@ -112,9 +112,10 @@ type weatherData struct {
 
 // The Weather Command
 type Weather struct {
-	token      string
-	butlertron *core.Butlertron
-	selector   *telebot.ReplyMarkup
+	token         string
+	butlertron    *core.Butlertron
+	selector      *telebot.ReplyMarkup
+	cachedWeather weatherData
 }
 
 func New(token string, butlertron *core.Butlertron) *Weather {
@@ -122,6 +123,17 @@ func New(token string, butlertron *core.Butlertron) *Weather {
 		token:      token,
 		butlertron: butlertron,
 	}
+
+	for i, row := range inlineHandlers {
+		for j, handler := range row {
+			h := handler.Handler
+			inlineHandlers[i][j].Handler = func(ctx telebot.Context) error {
+				ctx.Set("token", token)
+				return h(ctx)
+			}
+		}
+	}
+
 	w.selector = w.butlertron.RegisterInlineKeyboard(inlineHandlers)
 
 	return w
@@ -152,6 +164,7 @@ func (w *Weather) Execute(c telebot.Context) error {
 		return c.Send("Sorry, something went wrong fetching your weather for you!")
 	}
 	msg := currentConditionString(data)
+	w.cachedWeather = data
 
 	return c.Send(msg, w.selector)
 }

@@ -40,6 +40,7 @@ func init() {
 	// init location command
 	locationCmd := core.NewLocation(b)
 	bot.Handle(locationCmd.Command(), locationCmd.Execute)
+	bot.Use(locationCmd.LocationMiddleware)
 
 	//// Custom Commands ////
 	// init weather command

@@ -45,4 +45,5 @@ type InlineCommand struct {
 	Description string
 	Selector    *telebot.ReplyMarkup
 	Handler     telebot.HandlerFunc
+	Parent      Command
 }

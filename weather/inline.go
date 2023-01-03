@@ -1,6 +1,9 @@
 package weather
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
 )
@@ -33,7 +36,49 @@ var inlineHandlers = [][]core.InlineCommand{
 
 // Inline Keyboard Handlers
 func WeeklyHandler(c telebot.Context) error {
-	return c.Send("Fooey!")
+	// Get variables from context
+	loc, ok := c.Get("location").(*telebot.Location)
+	if !ok {
+		fmt.Println("Couldn't cast location middleware result to location type")
+		return c.Send("Sorry, something went wrong")
+	}
+
+	if loc == nil {
+		return c.Send("Please share your location to get the weather.")
+	}
+
+	token, ok := c.Get("token").(string)
+	if !ok {
+		fmt.Println("Couldn't cast token middleware result to string")
+		return c.Send("Sorry, something went wrong")
+	}
+
+	if token == "" {
+		fmt.Println("weather token wasn't set")
+		return c.Send("Sorry, something went wrong")
+	}
+
+	// get latest weather data
+	data, err := getWeather(loc, token)
+	if err != nil {
+		fmt.Println(err)
+		return c.Send("Sorry, something went wrong")
+	}
+
+	// format and return response
+	msg := ""
+	for _, day := range data.Daily {
+		weekday := time.Unix(int64(day.Dt), 0).Weekday().String()
+		weather := day.Weather[0]
+		emoji := conditionIDToEmoji(weather.ID)
+
+		msg += fmt.Sprintf("%s %s: %s\n", emoji, weekday, weather.Description)
+		msg += fmt.Sprintf("☀ %.1f°C (feels like %.1f°C)\n", day.Temp.Day, day.FeelsLike.Day)
+		msg += fmt.Sprintf("🌙 %.1f°C (feels like %.1f°C)\n", day.Temp.Eve, day.FeelsLike.Night)
+		msg += "\n"
+
+	}
+	return c.Send(msg)
 }
 
 func HourlyHandler(c telebot.Context) error {
