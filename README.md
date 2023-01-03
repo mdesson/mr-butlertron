@@ -26,7 +26,7 @@ type Foo struct {
 
 func New(b *core.Butlertron) {
 	f := Foo{}
-	f.Selector =  b.RegisterInlineKeyboard(inlineHandlers)
+	f.selector =  b.RegisterInlineKeyboard(inlineHandlers)
 
 	return &f
 }
