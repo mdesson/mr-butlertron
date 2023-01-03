@@ -25,7 +25,7 @@ type weatherData struct {
 		Pressure   int     `json:"pressure"`
 		Humidity   int     `json:"humidity"`
 		DewPoint   float64 `json:"dew_point"`
-		Uvi        int     `json:"uvi"`
+		Uvi        float64 `json:"uvi"`
 		Clouds     int     `json:"clouds"`
 		Visibility int     `json:"visibility"`
 		WindSpeed  float64 `json:"wind_speed"`
@@ -47,13 +47,17 @@ type weatherData struct {
 type Weather struct {
 	token      string
 	butlertron *core.Butlertron
+	selector   *telebot.ReplyMarkup
 }
 
 func New(token string, butlertron *core.Butlertron) *Weather {
-	return &Weather{
+	w := &Weather{
 		token:      token,
 		butlertron: butlertron,
 	}
+	w.selector = w.butlertron.RegisterInlineKeyboard(inlineHandlers)
+
+	return w
 }
 
 func (w Weather) Name() string {
@@ -68,11 +72,8 @@ func (w Weather) Command() string {
 	return "/weather"
 }
 
-func (w Weather) RequiresLocation() bool {
-	return true
-}
-
 func (w *Weather) Execute(c telebot.Context) error {
+	// get and format the weather
 	loc := w.butlertron.Location
 	if loc == nil {
 		return c.Send("Please share your location to get the weather.")
@@ -83,9 +84,9 @@ func (w *Weather) Execute(c telebot.Context) error {
 		fmt.Printf("Error getting weather: %s", err.Error())
 		return c.Send("Sorry, something went wrong fetching your weather for you!")
 	}
-
 	msg := currentConditionString(data)
-	return c.Send(msg)
+
+	return c.Send(msg, w.selector)
 }
 
 // Helpers
@@ -113,6 +114,7 @@ func currentConditionString(d weatherData) string {
 	conditions := string(byte(unicode.ToUpper(rune(currentWeather.Description[0])))) + currentWeather.Description[1:]
 
 	s := fmt.Sprintf("%s %s, feels like %.1f°C (actual %.1f°C).", weatherEmoji, conditions, d.Current.FeelsLike, d.Current.Temp)
+	s += fmt.Sprintf("\n🌬️ %.2f km/h", d.Current.WindSpeed)
 	return s
 }
 
