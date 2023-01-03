@@ -1,11 +1,8 @@
 package weather
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"unicode"
+	"strings"
 
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
@@ -41,6 +38,76 @@ type weatherData struct {
 		Dt            int     `json:"dt"`
 		Precipitation float64 `json:"precipitation"`
 	} `json:"minutely"`
+	Hourly []struct {
+		Dt         int     `json:"dt"`
+		Temp       float64 `json:"temp"`
+		FeelsLike  float64 `json:"feels_like"`
+		Pressure   int     `json:"pressure"`
+		Humidity   int     `json:"humidity"`
+		DewPoint   float64 `json:"dew_point"`
+		Uvi        float64 `json:"uvi"`
+		Clouds     int     `json:"clouds"`
+		Visibility int     `json:"visibility"`
+		WindSpeed  float64 `json:"wind_speed"`
+		WindDeg    int     `json:"wind_deg"`
+		WindGust   float64 `json:"wind_gust"`
+		Weather    []struct {
+			ID          int    `json:"id"`
+			Main        string `json:"main"`
+			Description string `json:"description"`
+			Icon        string `json:"icon"`
+		} `json:"weather"`
+		Pop  int `json:"pop"`
+		Rain struct {
+			OneH float64 `json:"1h"`
+		} `json:"rain,omitempty"`
+	} `json:"hourly"`
+	Daily []struct {
+		Dt        int     `json:"dt"`
+		Sunrise   int     `json:"sunrise"`
+		Sunset    int     `json:"sunset"`
+		Moonrise  int     `json:"moonrise"`
+		Moonset   int     `json:"moonset"`
+		MoonPhase float64 `json:"moon_phase"`
+		Temp      struct {
+			Day   float64 `json:"day"`
+			Min   float64 `json:"min"`
+			Max   float64 `json:"max"`
+			Night float64 `json:"night"`
+			Eve   float64 `json:"eve"`
+			Morn  float64 `json:"morn"`
+		} `json:"temp"`
+		FeelsLike struct {
+			Day   float64 `json:"day"`
+			Night float64 `json:"night"`
+			Eve   float64 `json:"eve"`
+			Morn  float64 `json:"morn"`
+		} `json:"feels_like"`
+		Pressure  int     `json:"pressure"`
+		Humidity  int     `json:"humidity"`
+		DewPoint  float64 `json:"dew_point"`
+		WindSpeed float64 `json:"wind_speed"`
+		WindDeg   int     `json:"wind_deg"`
+		WindGust  float64 `json:"wind_gust"`
+		Weather   []struct {
+			ID          int    `json:"id"`
+			Main        string `json:"main"`
+			Description string `json:"description"`
+			Icon        string `json:"icon"`
+		} `json:"weather"`
+		Clouds int     `json:"clouds"`
+		Pop    int     `json:"pop"`
+		Rain   float64 `json:"rain,omitempty"`
+		Uvi    float64 `json:"uvi"`
+	} `json:"daily"`
+	Alerts []struct {
+		SenderName  string   `json:"sender_name"`
+		Event       string   `json:"event"`
+		Start       int      `json:"start"`
+		End         int      `json:"end"`
+		Description string   `json:"description"`
+		Tags        []string `json:"tags"`
+	} `json:"alerts"`
 }
 
 // The Weather Command
@@ -89,50 +156,19 @@ func (w *Weather) Execute(c telebot.Context) error {
 	return c.Send(msg, w.selector)
 }
 
-// Helpers
-func getWeather(loc *telebot.Location, token string) (weatherData, error) {
-	url := fmt.Sprintf("https://api.openweathermap.org/data/3.0/onecall?units=metric&lat=%.2f&lon=%.2f&exclude=hourly,daily&appid=%s", loc.Lat, loc.Lng, token)
-	res, err := http.Get(url)
-	if err != nil {
-		return weatherData{}, err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return weatherData{}, err
-	}
-	d := weatherData{}
-	if err := json.Unmarshal(body, &d); err != nil {
-		return d, err
-	}
-	return d, nil
-}
-
 func currentConditionString(d weatherData) string {
 	currentWeather := d.Current.Weather[0]
 	weatherEmoji := conditionIDToEmoji(currentWeather.ID)
-	conditions := string(byte(unicode.ToUpper(rune(currentWeather.Description[0])))) + currentWeather.Description[1:]
 
-	s := fmt.Sprintf("%s %s, feels like %.1f°C (actual %.1f°C).", weatherEmoji, conditions, d.Current.FeelsLike, d.Current.Temp)
-	s += fmt.Sprintf("\n🌬️ %.2f km/h", d.Current.WindSpeed)
-	return s
-}
+	s := fmt.Sprintf("%s %s\n", weatherEmoji, currentWeather.Description)
+	s += fmt.Sprintf("🌡️ feels like %.1f°C (actual %.1f°C)\n", d.Current.FeelsLike, d.Current.Temp)
+	s += fmt.Sprintf("🌬️ %.2f km/h", d.Current.WindSpeed)
 
-func conditionIDToEmoji(id int) string {
-	if id < 300 {
-		return "⛈️"
-	} else if id < 600 {
-		return "🌧"
-	} else if id < 700 {
-		return "🌨️"
-	} else if id < 800 {
-		return "🌁"
-	} else if id == 800 {
-		return "☀"
-	} else if id < 900 {
-		return "🌥️"
+	if d.Alerts != nil {
+		for _, alert := range d.Alerts {
+			s += "\n\n"
+			s += fmt.Sprintf("🚨 %s Alert 🚨\n%s\n", strings.Title(alert.Event), alert.Description)
+		}
 	}
-
-	fmt.Printf("Passed invalid weather condition id %d\n", id)
-	return "?"
+	return s
 }

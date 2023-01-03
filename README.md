@@ -21,6 +21,7 @@ type Foo struct {
 }
 
 // snip implementing the Command interface // 
+
 func New(b *core.Butlertron) {
 	f := Foo{}
 	f.Selector =  b.RegisterInlineKeyboard(inlineHandlers)
@@ -28,6 +29,7 @@ func New(b *core.Butlertron) {
 	return &f
 }
 
+// Define your handlers here. Note that the 2D array determines the order it will be displayed in
 var inlineHandlers = [][]core.InlineCommand{
 	{
 		core.InlineCommand{

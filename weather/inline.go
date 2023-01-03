@@ -5,6 +5,10 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+// TODO: (inline) Minutely precipitation
+// TODO: (inline) Hourly forecast
+// TODO: (inline) Daily forecast
+
 var inlineHandlers = [][]core.InlineCommand{
 	{
 		core.InlineCommand{
