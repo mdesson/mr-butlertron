@@ -1,12 +1,43 @@
 package core
 
 import (
+	"context"
+	"sync"
+	"time"
+
 	"gopkg.in/telebot.v3"
 )
 
 type Butlertron struct {
-	Bot      *telebot.Bot
-	Location *telebot.Location
+	Bot            *telebot.Bot
+	Location       *telebot.Location
+	onTextMetadata *onTextMetadata
+}
+
+func NewButlertron(telegramToken string) (*Butlertron, error) {
+	pref := telebot.Settings{
+		Token:     telegramToken,
+		Poller:    &telebot.LongPoller{Timeout: 10 * time.Second},
+		ParseMode: telebot.ModeMarkdown,
+	}
+	bot, err := telebot.NewBot(pref)
+	if err != nil {
+		return nil, err
+	}
+
+	// init Mr. Butlertron
+	b := &Butlertron{Bot: bot}
+
+	// init mutex
+	b.onTextMetadata = &onTextMetadata{mu: &sync.Mutex{}}
+
+	//// Core Commands ////
+	// init location command
+	locationCmd := NewLocation(b)
+	bot.Handle(locationCmd.Command(), locationCmd.Execute)
+	bot.Use(locationCmd.LocationMiddleware)
+
+	return b, nil
 }
 
 func (b *Butlertron) RegisterInlineKeyboard(commands [][]InlineCommand) *telebot.ReplyMarkup {
@@ -26,6 +57,37 @@ func (b *Butlertron) RegisterInlineKeyboard(commands [][]InlineCommand) *telebot
 	selector.Inline(keyboardRows...)
 
 	return selector
+}
+
+// SetOnText will set the command that will run when text is next sent
+// If the deadline is exceed or it has been cancelled, there will be no reply
+func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	b.onTextMetadata.ctx = &ctx
+	b.onTextMetadata.cancel = &cancel
+
+	b.Bot.Handle(telebot.OnText, func(c telebot.Context) error {
+		b.onTextMetadata.mu.Lock()
+		defer b.onTextMetadata.mu.Unlock()
+		if ctx == nil || ctx.Err() != nil {
+			return nil
+		}
+		cancel()
+		return h(c)
+	})
+}
+
+// CancelOnText cancels the current command assigned to OnText
+// If there is no OnText handler, it has been cancelled, or it has timed out, it is a noop
+func (b *Butlertron) CancelOnText() {
+	ctx := b.onTextMetadata.ctx
+	mu := b.onTextMetadata.mu
+	cancel := *b.onTextMetadata.cancel
+	if ctx != nil {
+		mu.Lock()
+		defer mu.Unlock()
+		cancel()
+	}
 }
 
 // Command is the interface that all bot commands must implement.
@@ -53,4 +115,10 @@ type InlineCommand struct {
 	Parent Command
 	// Conditional refers to if it should be loaded by default as a button. If true, it will not be added on init
 	Conditional bool
+}
+
+type onTextMetadata struct {
+	ctx    *context.Context
+	cancel *context.CancelFunc
+	mu     *sync.Mutex
 }

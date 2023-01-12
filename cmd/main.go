@@ -1,53 +1,41 @@
 package main
 
 import (
-	"log"
-	"os"
-	"sync"
-	"time"
-
 	"github.com/mdesson/mr-butlertron/core"
+	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/weather"
 	telebot "gopkg.in/telebot.v3"
+	"log"
+	"os"
 )
 
 var (
-	b           *core.Butlertron
-	commandsMux sync.RWMutex
-	commands    []core.Command
-	menu        *telebot.ReplyMarkup
+	b        *core.Butlertron
+	commands []core.Command
+	menu     *telebot.ReplyMarkup
 )
 
 func init() {
 	// init bot
 	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	pref := telebot.Settings{
-		Token:     telegramToken,
-		Poller:    &telebot.LongPoller{Timeout: 10 * time.Second},
-		ParseMode: telebot.ModeMarkdown,
-	}
-	bot, err := telebot.NewBot(pref)
+	var err error
+	b, err = core.NewButlertron(telegramToken)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// init Mr. Butlertron
-	b = &core.Butlertron{Bot: bot}
-
 	// init menu
 	menu = &telebot.ReplyMarkup{ResizeKeyboard: true}
-
-	//// Core Commands ////
-	// init location command
-	locationCmd := core.NewLocation(b)
-	bot.Handle(locationCmd.Command(), locationCmd.Execute)
-	bot.Use(locationCmd.LocationMiddleware)
 
 	//// Custom Commands ////
 	// init weather command
 	weatherToken := os.Getenv("WEATHER_TOKEN")
 	weatherCmd := weather.New(weatherToken, b)
 	commands = append(commands, weatherCmd)
+
+	// init etymology command
+	etymologyCmd := etymology.New(b)
+	commands = append(commands, etymologyCmd)
 }
 
 func main() {
@@ -68,7 +56,9 @@ func main() {
 	}
 
 	// set commands
-	bot.SetCommands(setCommandsArgs)
+	if err := bot.SetCommands(setCommandsArgs); err != nil {
+		log.Fatal(err)
+	}
 
 	bot.Start()
 }
