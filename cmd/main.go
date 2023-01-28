@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/mdesson/mr-butlertron/core"
 	"github.com/mdesson/mr-butlertron/etymology"
+	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
 	telebot "gopkg.in/telebot.v3"
 	"log"
@@ -36,6 +37,11 @@ func init() {
 	// init etymology command
 	etymologyCmd := etymology.New(b)
 	commands = append(commands, etymologyCmd)
+
+	// init stock command
+	stockCmd := stock.New(b)
+	commands = append(commands, stockCmd)
+
 }
 
 func main() {
