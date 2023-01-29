@@ -22,6 +22,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app ./cmd/
 
 FROM --platform=linux/arm/v7 alpine:latest
 
+ADD https://github.com/golang/go/raw/master/lib/time/zoneinfo.zip /zoneinfo.zip
+ENV ZONEINFO /zoneinfo.zip
+
 ARG telegram_token
 ARG weather_token
 ENV TELEGRAM_BOT_TOKEN=$telegram_token
