@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
+	"os"
+
 	"github.com/mdesson/mr-butlertron/core"
 	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
 	telebot "gopkg.in/telebot.v3"
-	"log"
-	"os"
 )
 
 var (
