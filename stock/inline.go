@@ -49,51 +49,52 @@ func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 		}
 
 		name := fmt.Sprintf("stock-%d", i)
-		handler := func(c telebot.Context) error {
-
-			// keyboard and handlers setup
-			deleteHandler := func(c telebot.Context) error {
-				for j := 0; j < len(stock.symbols); j++ {
-					if stock.symbols[j] == symbol {
-						stock.symbols = append(stock.symbols[:j], stock.symbols[j+1:]...)
+		handler := func(s string) func(c telebot.Context) error {
+			return func(c telebot.Context) error {
+				// keyboard and handlers setup
+				deleteHandler := func(c telebot.Context) error {
+					for j := 0; j < len(stock.symbols); j++ {
+						if stock.symbols[j] == s {
+							stock.symbols = append(stock.symbols[:j], stock.symbols[j+1:]...)
+						}
 					}
+					return c.Send("Deleted!")
 				}
-				return c.Send("Deleted!")
-			}
 
-			selector := stock.b.RegisterInlineKeyboard([][]core.InlineCommand{
-				{
-					core.InlineCommand{
-						Name:        "delete",
-						Description: "🗑️ Delete",
-						Handler:     deleteHandler,
+				selector := stock.b.RegisterInlineKeyboard([][]core.InlineCommand{
+					{
+						core.InlineCommand{
+							Name:        "delete",
+							Description: "🗑️ Delete",
+							Handler:     deleteHandler,
+						},
 					},
-				},
-			})
+				})
 
-			// get text to return to client
-			details, err := getDetails(symbol)
-			if err != nil {
-				fmt.Println(err)
-				return c.Send("Something went wrong getting your stock")
+				// get text to return to client
+				details, err := getDetails(s)
+				if err != nil {
+					fmt.Println(err)
+					return c.Send("Something went wrong getting your stock")
+				}
+
+				// get chart
+				graphBuff, err := getChart(s, nil, nil, datetime.OneHour)
+				if err != nil {
+					fmt.Println(err)
+					return c.Send("Something went wrong getting your stock")
+				}
+
+				// return results
+				a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
+
+				if err := c.Send(details, selector); err != nil {
+					fmt.Println(err)
+					c.Send("Something went wrong getting your stock")
+				}
+				return c.SendAlbum(telebot.Album{a})
 			}
-
-			// get chart
-			graphBuff, err := getChart(symbol, nil, nil, datetime.OneHour)
-			if err != nil {
-				fmt.Println(err)
-				return c.Send("Something went wrong getting your stock")
-			}
-
-			// return results
-			a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
-
-			if err := c.Send(details, selector); err != nil {
-				fmt.Println(err)
-				c.Send("Something went wrong getting your stock")
-			}
-			return c.SendAlbum(telebot.Album{a})
-		}
+		}(symbol)
 
 		cmds[len(cmds)-1] = append(cmds[len(cmds)-1], core.InlineCommand{
 			Name:        name,
