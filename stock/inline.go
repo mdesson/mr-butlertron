@@ -11,6 +11,19 @@ import (
 	"time"
 )
 
+func sendGraph(c telebot.Context, symbol string, start *time.Time, end *time.Time, interval datetime.Interval, dateFormatString string) error {
+	graphBuff, err := getChart(symbol, start, end, interval, dateFormatString)
+	if err != nil {
+		fmt.Println(err)
+		return c.Send("Something went wrong getting your stock")
+	}
+
+	// return results
+	a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
+
+	return c.SendAlbum(telebot.Album{a})
+}
+
 func makeDeleteHandler(stock *Stock, symbol string, i int) func(c telebot.Context) error {
 	return func(c telebot.Context) error {
 		for j := 0; j < len(stock.symbols); j++ {
@@ -44,7 +57,50 @@ func makeInlineHandler(stock *Stock, s string, i int) func(c telebot.Context) er
 		// keyboard and handlers setup
 		deleteHandler := makeDeleteHandler(stock, s, i)
 
+		// get yesterday as starting point for all historical data
+		tz, err := time.LoadLocation("America/New_York")
+		if err != nil {
+			fmt.Println(err)
+			return c.Send("Something went wrong getting your stock")
+		}
+		yesterday := time.Date(time.Now().Year(), time.Now().Month(), time.Now().Day()-1, 59, 59, 59, 59, tz)
+		oneMonth := yesterday.AddDate(0, -1, 0)
+		threeMonths := yesterday.AddDate(0, -3, 0)
+		sixMonths := yesterday.AddDate(0, -6, 0)
+		oneYear := yesterday.AddDate(-1, 0, 0)
+
+		// add inline keyboard for historical data and delete
 		selector := stock.b.RegisterInlineKeyboard([][]core.InlineCommand{
+			{
+				core.InlineCommand{
+					Name:        fmt.Sprintf("monthly-%s", s),
+					Description: "📅 1mo",
+					Handler: func(c telebot.Context) error {
+						return sendGraph(c, s, &oneMonth, &yesterday, datetime.OneDay, "2006-01-02")
+					},
+				},
+				core.InlineCommand{
+					Name:        fmt.Sprintf("quarterly-%s", s),
+					Description: "📅 3mo",
+					Handler: func(c telebot.Context) error {
+						return sendGraph(c, s, &threeMonths, &yesterday, datetime.FiveDay, "2006-01-02")
+					},
+				},
+				core.InlineCommand{
+					Name:        fmt.Sprintf("biannually-%s", s),
+					Description: "📅 6mo",
+					Handler: func(c telebot.Context) error {
+						return sendGraph(c, s, &sixMonths, &yesterday, datetime.FiveDay, "2006-01-02")
+					},
+				},
+				core.InlineCommand{
+					Name:        fmt.Sprintf("annualy-%s", s),
+					Description: "📅 1y",
+					Handler: func(c telebot.Context) error {
+						return sendGraph(c, s, &oneYear, &yesterday, datetime.OneMonth, "2006-01-02")
+					},
+				},
+			},
 			{
 				core.InlineCommand{
 					Name:        "delete",
@@ -61,21 +117,12 @@ func makeInlineHandler(stock *Stock, s string, i int) func(c telebot.Context) er
 			return c.Send("Something went wrong getting your stock")
 		}
 
-		// get chart
-		graphBuff, err := getChart(s, nil, nil, datetime.OneHour)
-		if err != nil {
-			fmt.Println(err)
-			return c.Send("Something went wrong getting your stock")
-		}
-
-		// return results
-		a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
-
 		if err := c.Send(details, selector); err != nil {
 			fmt.Println(err)
 			c.Send("Something went wrong getting your stock")
 		}
-		return c.SendAlbum(telebot.Album{a})
+
+		return sendGraph(c, s, nil, nil, datetime.OneHour, "3:04pm")
 	}
 }
 

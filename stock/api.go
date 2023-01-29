@@ -56,7 +56,7 @@ func getDetails(symbol string) (string, error) {
 	return s, nil
 }
 
-func getChart(symbol string, start *time.Time, end *time.Time, interval datetime.Interval) (*bytes.Buffer, error) {
+func getChart(symbol string, start *time.Time, end *time.Time, interval datetime.Interval, dateFormatString string) (*bytes.Buffer, error) {
 	var xValues []time.Time
 	var yValues []float64
 
@@ -98,7 +98,7 @@ func getChart(symbol string, start *time.Time, end *time.Time, interval datetime
 	// create graph
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
-			ValueFormatter: chart.TimeValueFormatterWithFormat("3:04pm"),
+			ValueFormatter: chart.TimeValueFormatterWithFormat(dateFormatString),
 			Style: chart.Style{
 				TextRotationDegrees: 45.0,
 			},
