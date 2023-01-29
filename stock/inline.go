@@ -11,6 +11,74 @@ import (
 	"time"
 )
 
+func makeDeleteHandler(stock *Stock, symbol string, i int) func(c telebot.Context) error {
+	return func(c telebot.Context) error {
+		for j := 0; j < len(stock.symbols); j++ {
+			if stock.symbols[j] == symbol {
+				stock.symbols = append(stock.symbols[:i], stock.symbols[i+1:]...)
+			}
+		}
+		return c.Send("Deleted!")
+	}
+}
+
+func makeAddHandler(stock *Stock) func(c telebot.Context) error {
+	return func(c telebot.Context) error {
+		stock.b.SetOnText(func(c telebot.Context) error {
+			symbol := strings.ToUpper(c.Text())
+
+			// library returns nil for non-existent stocks
+			if q, err := quote.Get(symbol); err != nil || q == nil {
+				return c.Send("Sorry, I couldn't find it.")
+			}
+
+			stock.symbols = append(stock.symbols, symbol)
+			return c.Send("Added!")
+		}, 1*time.Minute)
+		return c.Send("What stock would you like to add?")
+	}
+}
+
+func makeInlineHandler(stock *Stock, s string, i int) func(c telebot.Context) error {
+	return func(c telebot.Context) error {
+		// keyboard and handlers setup
+		deleteHandler := makeDeleteHandler(stock, s, i)
+
+		selector := stock.b.RegisterInlineKeyboard([][]core.InlineCommand{
+			{
+				core.InlineCommand{
+					Name:        "delete",
+					Description: "🗑️ Delete",
+					Handler:     deleteHandler,
+				},
+			},
+		})
+
+		// get text to return to client
+		details, err := getDetails(s)
+		if err != nil {
+			fmt.Println(err)
+			return c.Send("Something went wrong getting your stock")
+		}
+
+		// get chart
+		graphBuff, err := getChart(s, nil, nil, datetime.OneHour)
+		if err != nil {
+			fmt.Println(err)
+			return c.Send("Something went wrong getting your stock")
+		}
+
+		// return results
+		a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
+
+		if err := c.Send(details, selector); err != nil {
+			fmt.Println(err)
+			c.Send("Something went wrong getting your stock")
+		}
+		return c.SendAlbum(telebot.Album{a})
+	}
+}
+
 func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 	// get descriptions in parallel
 	wg := sync.WaitGroup{}
@@ -47,83 +115,18 @@ func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 			cmds = append(cmds, []core.InlineCommand{})
 		}
 
-		d := descriptions[symbol]
-
-		name := fmt.Sprintf("stock-%d", i)
-		handler := func(s string) func(c telebot.Context) error {
-			return func(c telebot.Context) error {
-				// keyboard and handlers setup
-				deleteHandler := func(c telebot.Context) error {
-					for j := 0; j < len(stock.symbols); j++ {
-						if stock.symbols[j] == s {
-							stock.symbols = append(stock.symbols[:j], stock.symbols[j+1:]...)
-						}
-					}
-					return c.Send("Deleted!")
-				}
-
-				selector := stock.b.RegisterInlineKeyboard([][]core.InlineCommand{
-					{
-						core.InlineCommand{
-							Name:        "delete",
-							Description: "🗑️ Delete",
-							Handler:     deleteHandler,
-						},
-					},
-				})
-
-				// get text to return to client
-				details, err := getDetails(s)
-				if err != nil {
-					fmt.Println(err)
-					return c.Send("Something went wrong getting your stock")
-				}
-
-				// get chart
-				graphBuff, err := getChart(s, nil, nil, datetime.OneHour)
-				if err != nil {
-					fmt.Println(err)
-					return c.Send("Something went wrong getting your stock")
-				}
-
-				// return results
-				a := &telebot.Photo{File: telebot.FromReader(graphBuff)}
-
-				if err := c.Send(details, selector); err != nil {
-					fmt.Println(err)
-					c.Send("Something went wrong getting your stock")
-				}
-				return c.SendAlbum(telebot.Album{a})
-			}
-		}(symbol)
-
 		cmds[len(cmds)-1] = append(cmds[len(cmds)-1], core.InlineCommand{
-			Name:        name,
-			Description: d,
-			Handler:     handler,
+			Name:        fmt.Sprintf("stock-%d", i),
+			Description: descriptions[symbol],
+			Handler:     makeInlineHandler(stock, symbol, i),
 		})
-
-		i++
 	}
 
 	// The bottom row is always the Add button, full width
 	addCommand := core.InlineCommand{
 		Name:        "add",
 		Description: "➕ Add",
-		Handler: func(c telebot.Context) error {
-			stock.b.SetOnText(func(c telebot.Context) error {
-				symbol := strings.ToUpper(c.Text())
-
-				// library returns nil for non-existent stocks
-				if q, err := quote.Get(symbol); err != nil || q == nil {
-					return c.Send("Sorry, I couldn't find it.")
-				}
-
-				stock.symbols = append(stock.symbols, symbol)
-				return c.Send("Added!")
-			}, 1*time.Minute)
-			return c.Send("What stock would you like to add?")
-		},
+		Handler:     makeAddHandler(stock),
 	}
 	cmds = append(cmds, []core.InlineCommand{addCommand})
 
