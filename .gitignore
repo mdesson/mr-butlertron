@@ -16,3 +16,4 @@
 
 # local files
 local/
+.envrc
