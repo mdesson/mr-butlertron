@@ -14,25 +14,26 @@ import (
 func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 	// get descriptions in parallel
 	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
 	var descErr error
 
-	descriptions := make(chan string, len(stock.symbols))
+	descriptions := make(map[string]string)
 
 	for _, symbol := range stock.symbols {
 		wg.Add(1)
 		go func(s string) {
-			s, err := getDescription(s)
+			d, err := getDescription(s)
 			if err != nil {
 				descErr = err
-				descriptions <- ""
 			} else {
-				descriptions <- s
+				mu.Lock()
+				descriptions[s] = d
+				mu.Unlock()
 			}
 			wg.Done()
 		}(symbol)
 	}
 	wg.Wait()
-	close(descriptions)
 
 	// each symbol must have both a quote and a corresponding ticker
 	if descErr != nil {
@@ -42,11 +43,11 @@ func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 	// add inline commands
 	cmds := make([][]core.InlineCommand, 0)
 	for i, symbol := range stock.symbols {
-		d := <-descriptions
-
 		if i%2 == 0 {
 			cmds = append(cmds, []core.InlineCommand{})
 		}
+
+		d := descriptions[symbol]
 
 		name := fmt.Sprintf("stock-%d", i)
 		handler := func(s string) func(c telebot.Context) error {
@@ -101,6 +102,8 @@ func createInlineHandlers(stock *Stock) ([][]core.InlineCommand, error) {
 			Description: d,
 			Handler:     handler,
 		})
+
+		i++
 	}
 
 	// The bottom row is always the Add button, full width

@@ -90,15 +90,32 @@ func getChart(symbol string, start *time.Time, end *time.Time, interval datetime
 		return nil, err
 	}
 
+	// calculate percentage change
+	initial := yValues[0]
+	final := yValues[len(yValues)-1]
+	percentChange := (final - initial) / initial * 100
+
 	// create graph
 	graph := chart.Chart{
 		XAxis: chart.XAxis{
 			ValueFormatter: chart.TimeValueFormatterWithFormat("3:04pm"),
+			Style: chart.Style{
+				TextRotationDegrees: 45.0,
+			},
 		},
 		Series: []chart.Series{
 			chart.TimeSeries{
 				XValues: xValues,
 				YValues: yValues,
+			},
+			chart.AnnotationSeries{
+				Annotations: []chart.Value2{
+					{
+						XValue: chart.TimeToFloat64(xValues[len(xValues)-1]),
+						YValue: final,
+						Label:  fmt.Sprintf("$%.2f (%.2f%%)", final, percentChange),
+					},
+				},
 			},
 		},
 	}
