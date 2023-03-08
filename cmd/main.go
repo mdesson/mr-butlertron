@@ -1,29 +1,29 @@
 package main
 
 import (
+	"github.com/mdesson/mr-butlertron/chatgpt"
 	"github.com/mdesson/mr-butlertron/core"
 	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
-	telebot "gopkg.in/telebot.v3"
+	"gopkg.in/telebot.v3"
 	"log"
 )
 
 var (
-	b        *core.Butlertron
-	commands []core.Command
-	menu     *telebot.ReplyMarkup
+	b *core.Butlertron
 )
 
 func init() {
-	// init bot
-	b, err := core.NewButlertron()
+	var err error
+	commands := make([]core.Command, 0)
+	menu := &telebot.ReplyMarkup{ResizeKeyboard: true}
+
+	//// init bot ////
+	b, err = core.NewButlertron()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// init menu
-	menu = &telebot.ReplyMarkup{ResizeKeyboard: true}
 
 	//// Custom Commands ////
 	// init weather command
@@ -41,13 +41,17 @@ func init() {
 	stockCmd := stock.New(b)
 	commands = append(commands, stockCmd)
 
-}
+	// init chatgpt command
+	chatgptCmd, err := chatgpt.New(b)
+	if err != nil {
+		log.Fatal(err)
+	}
+	commands = append(commands, chatgptCmd)
 
-func main() {
 	bot := b.Bot
 	setCommandsArgs := make([]telebot.Command, 0)
 
-	// register commands
+	//// register commands ////
 	for _, command := range commands {
 		// Add text handler
 		bot.Handle(command.Command(), command.Execute)
@@ -60,10 +64,12 @@ func main() {
 		setCommandsArgs = append(setCommandsArgs, telebot.Command{Text: command.Command(), Description: command.Description()})
 	}
 
-	// set commands
+	//// set commands ////
 	if err := bot.SetCommands(setCommandsArgs); err != nil {
 		log.Fatal(err)
 	}
+}
 
-	bot.Start()
+func main() {
+	b.Bot.Start()
 }

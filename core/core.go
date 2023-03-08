@@ -104,8 +104,7 @@ func (b *Butlertron) CancelOnText() {
 }
 
 // Command is the interface that all bot commands must implement.
-type Command interface {
-	// Name returns the name of the command.
+type Command interface { // Name returns the name of the command.
 	Name() string
 	// Description returns a brief description of the command.
 	Description() string
