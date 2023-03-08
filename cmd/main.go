@@ -1,14 +1,12 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"github.com/mdesson/mr-butlertron/core"
 	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
 	telebot "gopkg.in/telebot.v3"
+	"log"
 )
 
 var (
@@ -19,9 +17,7 @@ var (
 
 func init() {
 	// init bot
-	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	var err error
-	b, err = core.NewButlertron(telegramToken)
+	b, err := core.NewButlertron()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,8 +27,10 @@ func init() {
 
 	//// Custom Commands ////
 	// init weather command
-	weatherToken := os.Getenv("WEATHER_TOKEN")
-	weatherCmd := weather.New(weatherToken, b)
+	weatherCmd, err := weather.New(b)
+	if err != nil {
+		log.Fatal(err)
+	}
 	commands = append(commands, weatherCmd)
 
 	// init etymology command

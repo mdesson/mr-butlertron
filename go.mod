@@ -3,6 +3,7 @@ module github.com/mdesson/mr-butlertron
 go 1.18
 
 require (
+	github.com/caarlos0/env v3.5.0+incompatible
 	github.com/piquette/finance-go v1.0.0
 	github.com/wcharczuk/go-chart/v2 v2.1.0
 	golang.org/x/net v0.5.0

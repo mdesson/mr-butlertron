@@ -1,6 +1,7 @@
 package weather
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mdesson/mr-butlertron/core"
@@ -111,22 +112,23 @@ type weatherData struct {
 
 // The Weather Command
 type Weather struct {
-	token      string
 	butlertron *core.Butlertron
 	selector   *telebot.ReplyMarkup
 }
 
-func New(token string, butlertron *core.Butlertron) *Weather {
+func New(b *core.Butlertron) (*Weather, error) {
+	if b.Config.WeatherToken == "" {
+		return nil, errors.New("no weather token provided")
+	}
 	w := &Weather{
-		token:      token,
-		butlertron: butlertron,
+		butlertron: b,
 	}
 
 	for i, row := range inlineHandlers {
 		for j, handler := range row {
 			h := handler.Handler
 			inlineHandlers[i][j].Handler = func(ctx telebot.Context) error {
-				ctx.Set("token", token)
+				ctx.Set("token", b.Config.WeatherToken)
 				return h(ctx)
 			}
 		}
@@ -134,7 +136,7 @@ func New(token string, butlertron *core.Butlertron) *Weather {
 
 	w.selector = w.butlertron.RegisterInlineKeyboard(inlineHandlers)
 
-	return w
+	return w, nil
 }
 
 func (w Weather) Name() string {
@@ -156,7 +158,7 @@ func (w *Weather) Execute(c telebot.Context) error {
 		return c.Send("Please share your location to get the weather.")
 	}
 
-	data, err := getWeather(loc, w.token)
+	data, err := getWeather(loc, w.butlertron.Config.WeatherToken)
 	if err != nil {
 		fmt.Printf("Error getting weather: %s", err.Error())
 		return c.Send("Sorry, something went wrong fetching your weather for you!")

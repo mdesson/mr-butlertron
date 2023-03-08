@@ -5,18 +5,31 @@ import (
 	"sync"
 	"time"
 
+	"github.com/caarlos0/env"
 	"gopkg.in/telebot.v3"
 )
 
+type Config struct {
+	TelegramBotToken string `env:"TELEGRAM_BOT_TOKEN,required"`
+	WeatherToken     string `env:"WEATHER_TOKEN"`
+	OpenAIToken      string `env:"OPENAI_TOKEN"`
+}
+
 type Butlertron struct {
 	Bot            *telebot.Bot
+	Config         Config
 	Location       *telebot.Location
 	onTextMetadata *onTextMetadata
 }
 
-func NewButlertron(telegramToken string) (*Butlertron, error) {
+func NewButlertron() (*Butlertron, error) {
+	var c Config
+	if err := env.Parse(&c); err != nil {
+		return nil, err
+	}
+
 	pref := telebot.Settings{
-		Token:     telegramToken,
+		Token:     c.TelegramBotToken,
 		Poller:    &telebot.LongPoller{Timeout: 10 * time.Second},
 		ParseMode: telebot.ModeMarkdown,
 	}
@@ -26,7 +39,7 @@ func NewButlertron(telegramToken string) (*Butlertron, error) {
 	}
 
 	// init Mr. Butlertron
-	b := &Butlertron{Bot: bot}
+	b := &Butlertron{Bot: bot, Config: c}
 
 	// init mutex
 	b.onTextMetadata = &onTextMetadata{mu: &sync.Mutex{}}
