@@ -18,8 +18,7 @@ var (
 	b              *core.Butlertron = nil
 )
 
-type Etymology struct {
-}
+type Etymology struct{}
 
 func New(butler *core.Butlertron) *Etymology {
 	b = butler
