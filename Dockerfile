@@ -27,7 +27,7 @@ ENV ZONEINFO /zoneinfo.zip
 
 ARG telegram_token
 ARG weather_token
-ARG opeanai_token
+ARG openai_token
 ENV TELEGRAM_BOT_TOKEN=$telegram_token
 ENV WEATHER_TOKEN=$weather_token
 ENV OPENAI_TOKEN=$opeanai_token
