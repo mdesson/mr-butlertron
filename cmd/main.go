@@ -7,6 +7,8 @@ import (
 	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
 	"gopkg.in/telebot.v3"
+
+	"fmt"
 	"log"
 )
 
@@ -15,6 +17,7 @@ var (
 )
 
 func init() {
+	fmt.Println("Initializing Butlertron.")
 	var err error
 	commands := make([]core.Command, 0)
 	menu := &telebot.ReplyMarkup{ResizeKeyboard: true}
@@ -71,5 +74,6 @@ func init() {
 }
 
 func main() {
+	fmt.Println("Starting Butlertron...")
 	b.Bot.Start()
 }
