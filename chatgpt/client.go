@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -84,7 +85,8 @@ func (c *Client) SendMessage(message string) (string, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return "", fmt.Errorf("unexpected status code: %d\n", resp.StatusCode)
+		bodyStr, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected status code %d: %s\n", resp.StatusCode, bodyStr)
 	}
 
 	defer resp.Body.Close()
