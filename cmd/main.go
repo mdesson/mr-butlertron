@@ -74,6 +74,6 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Starting Butlertron...")
+	fmt.Println("Starting Butlertron.")
 	b.Bot.Start()
 }

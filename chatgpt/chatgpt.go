@@ -47,17 +47,18 @@ func (c *ChatGPT) Execute(tc telebot.Context) error {
 }
 
 func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
-	msg, err := c.client.SendMessage(tc.Text())
+	prompt := tc.Text()
+
+	if prompt == "reset" || prompt == "Reset" {
+		c.client.ResetHistory()
+		return tc.Send("Reset conversation history.")
+	}
+
+	msg, err := c.client.SendMessage(prompt)
 	if err != nil {
 		fmt.Printf("error sending message: %s", err.Error())
 		return tc.Send("Error talking to chatGPT")
 	}
 
-	if msg == "reset" {
-		c.client.ResetHistory()
-		return tc.Send("Reset conversation history.")
-	}
-
-	botMsg := fmt.Sprintf("🤖 %s", msg)
-	return tc.Send(botMsg)
+	return tc.Send(msg)
 }
