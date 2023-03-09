@@ -104,3 +104,9 @@ func (c *Client) SendMessage(message string) (string, error) {
 
 	return botMessage.Content, nil
 }
+
+func (c *Client) ResetHistory() {
+	c.history = []ChatMessage{
+		{Role: "system", Content: systemPrompt},
+	}
+}

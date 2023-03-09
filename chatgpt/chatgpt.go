@@ -53,6 +53,11 @@ func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 		return tc.Send("Error talking to chatGPT")
 	}
 
+	if msg == "reset" {
+		c.client.ResetHistory()
+		return tc.Send("Reset conversation history.")
+	}
+
 	botMsg := fmt.Sprintf("🤖 %s", msg)
 	return tc.Send(botMsg)
 }
