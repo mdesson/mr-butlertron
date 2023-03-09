@@ -38,7 +38,7 @@ func (e Etymology) Command() string {
 }
 
 func (e *Etymology) Execute(c telebot.Context) error {
-	b.SetOnText(onTextHandler, 1*time.Minute)
+	b.SetOnText(onTextHandler, 1*time.Minute, true)
 	return c.Send("What word are you looking for?")
 }
 

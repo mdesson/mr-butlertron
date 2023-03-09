@@ -74,7 +74,7 @@ func (b *Butlertron) RegisterInlineKeyboard(commands [][]InlineCommand) *telebot
 
 // SetOnText will set the command that will run when text is next sent
 // If the deadline is exceed or it has been cancelled, there will be no reply
-func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration) {
+func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration, cancelAfterHandling bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	b.onTextMetadata.ctx = &ctx
 	b.onTextMetadata.cancel = &cancel
@@ -85,7 +85,9 @@ func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration) {
 		if ctx == nil || ctx.Err() != nil {
 			return nil
 		}
-		cancel()
+		if !cancelAfterHandling {
+			cancel()
+		}
 		return h(c)
 	})
 }

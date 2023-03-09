@@ -47,7 +47,7 @@ func makeAddHandler(stock *Stock) func(c telebot.Context) error {
 
 			stock.symbols = append(stock.symbols, symbol)
 			return c.Send("Added!")
-		}, 1*time.Minute)
+		}, 1*time.Minute, true)
 		return c.Send("What stock would you like to add?")
 	}
 }
