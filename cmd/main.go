@@ -75,5 +75,10 @@ func init() {
 
 func main() {
 	fmt.Println("Starting Butlertron...")
-	b.Bot.Start()
+	//b.Bot.Start()
+	client := chatgpt.NewClient(b.Config.OpenAIToken)
+	msg, _ := client.SendMessage("How would flamethrowers improve the game of chess?")
+	fmt.Println(msg)
+	msg, _ = client.SendMessage("Name five rules for the above addition to chess")
+	fmt.Println(msg)
 }
