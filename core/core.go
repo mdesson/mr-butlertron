@@ -75,6 +75,7 @@ func (b *Butlertron) RegisterInlineKeyboard(commands [][]InlineCommand) *telebot
 // SetOnTextDefault sets the default responder if no OnText has been manually trigger
 func (b *Butlertron) SetOnTextDefault(h telebot.HandlerFunc) {
 	b.onTextMetadata.defaultHandler = h
+	b.Bot.Handle(telebot.OnText, h)
 }
 
 // SetOnText will set the command that will run when text is next sent
@@ -90,7 +91,7 @@ func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration, can
 		if ctx == nil || ctx.Err() != nil {
 			return b.onTextMetadata.defaultHandler(c)
 		}
-		if !cancelAfterHandling {
+		if cancelAfterHandling {
 			cancel()
 		}
 		return h(c)

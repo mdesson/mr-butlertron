@@ -39,7 +39,7 @@ func (c ChatGPT) Command() string {
 func (c *ChatGPT) Execute(tc telebot.Context) error {
 	c.enabled = !c.enabled
 	if c.enabled {
-		c.b.SetOnText(c.OnTextHandler, 1*time.Hour, true)
+		c.b.SetOnText(c.OnTextHandler, 1*time.Hour, false)
 		return tc.Send("Entering chat mode.")
 	} else {
 		c.b.CancelOnText()
