@@ -41,7 +41,7 @@ func NewButlertron() (*Butlertron, error) {
 	// init Mr. Butlertron
 	b := &Butlertron{Bot: bot, Config: c}
 
-	// init mutex
+	// init onText settings
 	b.onTextMetadata = &onTextMetadata{mu: &sync.Mutex{}}
 
 	//// Core Commands ////
@@ -72,6 +72,11 @@ func (b *Butlertron) RegisterInlineKeyboard(commands [][]InlineCommand) *telebot
 	return selector
 }
 
+// SetOnTextDefault sets the default responder if no OnText has been manually trigger
+func (b *Butlertron) SetOnTextDefault(h telebot.HandlerFunc) {
+	b.onTextMetadata.defaultHandler = h
+}
+
 // SetOnText will set the command that will run when text is next sent
 // If the deadline is exceed or it has been cancelled, there will be no reply
 func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration, cancelAfterHandling bool) {
@@ -83,7 +88,7 @@ func (b *Butlertron) SetOnText(h telebot.HandlerFunc, timeout time.Duration, can
 		b.onTextMetadata.mu.Lock()
 		defer b.onTextMetadata.mu.Unlock()
 		if ctx == nil || ctx.Err() != nil {
-			return nil
+			return b.onTextMetadata.defaultHandler(c)
 		}
 		if !cancelAfterHandling {
 			cancel()
@@ -132,7 +137,8 @@ type InlineCommand struct {
 }
 
 type onTextMetadata struct {
-	ctx    *context.Context
-	cancel *context.CancelFunc
-	mu     *sync.Mutex
+	ctx            *context.Context
+	cancel         *context.CancelFunc
+	mu             *sync.Mutex
+	defaultHandler telebot.HandlerFunc
 }

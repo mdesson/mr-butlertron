@@ -71,6 +71,9 @@ func init() {
 	if err := bot.SetCommands(setCommandsArgs); err != nil {
 		log.Fatal(err)
 	}
+
+	//// set default onText handler ////
+	b.SetOnTextDefault(chatgptCmd.OnTextHandler)
 }
 
 func main() {
