@@ -6,6 +6,7 @@ import (
 	"github.com/mdesson/mr-butlertron/dalle2"
 	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/stock"
+	"github.com/mdesson/mr-butlertron/streaming"
 	"github.com/mdesson/mr-butlertron/weather"
 	"gopkg.in/telebot.v3"
 
@@ -40,6 +41,10 @@ func init() {
 	// init etymology command
 	etymologyCmd := etymology.New(b)
 	commands = append(commands, etymologyCmd)
+
+	// init streaming command
+	streamingCmd := streaming.New(b)
+	commands = append(commands, streamingCmd)
 
 	// init stock command
 	stockCmd := stock.New(b)

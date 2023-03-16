@@ -11,8 +11,9 @@ import (
 
 type Config struct {
 	TelegramBotToken string `env:"TELEGRAM_BOT_TOKEN,required"`
-	WeatherToken     string `env:"WEATHER_TOKEN"`
-	OpenAIToken      string `env:"OPENAI_TOKEN"`
+	WeatherToken     string `env:"WEATHER_TOKEN,required"`
+	OpenAIToken      string `env:"OPENAI_TOKEN,required"`
+	StreamingToken   string `env:"STREAMING_TOKEN,required"`
 }
 
 type Butlertron struct {
