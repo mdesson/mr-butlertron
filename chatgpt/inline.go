@@ -15,7 +15,7 @@ func InlineHandlers(c *ChatGPT) [][]core.InlineCommand {
 			},
 			{
 				Name:        "reset-chatgpt-history",
-				Description: "📔 reset history",
+				Description: "🗑️ reset history",
 				Handler:     ResetChatFunc(c),
 			},
 		},

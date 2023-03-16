@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/mdesson/mr-butlertron/chatgpt"
 	"github.com/mdesson/mr-butlertron/core"
+	"github.com/mdesson/mr-butlertron/dalle2"
 	"github.com/mdesson/mr-butlertron/etymology"
 	"github.com/mdesson/mr-butlertron/stock"
 	"github.com/mdesson/mr-butlertron/weather"
@@ -43,6 +44,10 @@ func init() {
 	// init stock command
 	stockCmd := stock.New(b)
 	commands = append(commands, stockCmd)
+
+	// init DALLE-2 Command
+	dalleCmd := dalle2.New(b)
+	commands = append(commands, dalleCmd)
 
 	// init chatgpt command
 	chatgptCmd, err := chatgpt.New(b)
