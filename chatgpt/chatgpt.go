@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
+	"strings"
 	"time"
 )
 
@@ -49,9 +50,18 @@ func (c *ChatGPT) Execute(tc telebot.Context) error {
 func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 	prompt := tc.Text()
 
-	if prompt == "reset" || prompt == "Reset" {
+	if strings.ToLower(prompt) == "reset" {
 		c.client.ResetHistory()
 		return tc.Send("Reset conversation history.")
+	}
+
+	if strings.ToLower(prompt) == "switch" {
+		c.client.SwapPrompt()
+		if c.client.systemPrompt == standardPropmt {
+			return tc.Send("Swapped to the standard prompt.")
+		} else {
+			return tc.Send("Swapped to the system prompt.")
+		}
 	}
 
 	msg, err := c.client.SendMessage(prompt)
