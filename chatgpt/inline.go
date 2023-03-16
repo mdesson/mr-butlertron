@@ -22,7 +22,7 @@ func InlineHandlers(c *ChatGPT) [][]core.InlineCommand {
 		{
 			{
 				Name:        "toggle-chatgpt",
-				Description: "power button",
+				Description: "🔌 turn on/off",
 				Handler:     ToggleFunc(c),
 			},
 		},
