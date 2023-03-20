@@ -33,19 +33,20 @@ func (c ChatGPT) Command() string {
 }
 
 func (c *ChatGPT) Execute(tc telebot.Context) error {
-	status := "disabled 🔴"
+	status := "🔴 Status: disabled"
 	if c.enabled {
-		status = "enabled 🟢"
+		status = "🟢 Status: enabled"
 	}
-	prompt := "standard 🤖"
+	prompt := "🤖 Prompt: standard"
 	if c.client.systemPrompt == danPrompt {
-		prompt = "DAN 🤠"
+		prompt = "🤠 Prompt: DAN"
+	}
+	model := "🦥 Model: gpt-3.5"
+	if c.client.model == chatModel_4 {
+		model = "🐆 Model: gpt-4"
 	}
 
-	msg := "Welcome to ChatGPT's control panel!\n"
-	msg += fmt.Sprintf("\nStatus: %s", status)
-	msg += fmt.Sprintf("\nPrompt: %s", prompt)
-	msg += fmt.Sprintf("\nModel: %s", c.client.model)
+	msg := fmt.Sprintf("Welcome to ChatGPT's control panel!\n\n%s\n%s\n%s", status, prompt, model)
 
 	return tc.Send(msg, c.selector)
 }
