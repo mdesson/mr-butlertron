@@ -21,6 +21,11 @@ func InlineHandlers(c *ChatGPT) [][]core.InlineCommand {
 		},
 		{
 			{
+				Name:        "toggle-chatgpt-model",
+				Description: "💽 change model",
+				Handler:     SwapModelFunc(c),
+			},
+			{
 				Name:        "toggle-chatgpt",
 				Description: "🔌 turn on/off",
 				Handler:     ToggleFunc(c),
@@ -47,6 +52,17 @@ func SwapSystemPromptFunc(c *ChatGPT) telebot.HandlerFunc {
 			return ctx.Send("Swapped to standard prompt")
 		} else {
 			return ctx.Send("Swapped to DAN")
+		}
+	}
+}
+
+func SwapModelFunc(c *ChatGPT) telebot.HandlerFunc {
+	return func(ctx telebot.Context) error {
+		c.client.SwapModel()
+		if c.client.model == chatModel_3 {
+			return ctx.Send("Swapped to GPT-3")
+		} else {
+			return ctx.Send("Swapped to GPT-4")
 		}
 	}
 }
