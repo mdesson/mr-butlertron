@@ -58,6 +58,9 @@ func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 
 	prompt := tc.Text()
 
+	if err := tc.Notify(telebot.Typing); err != nil {
+		return tc.Send("Error sending typing notification")
+	}
 	msg, err := c.client.SendMessage(prompt)
 	if err != nil {
 		fmt.Printf("error sending message: %s", err.Error())
