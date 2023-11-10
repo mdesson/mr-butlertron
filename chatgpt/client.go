@@ -74,7 +74,7 @@ func NewClient(token string) *Client {
 
 	return &Client{
 		token:        token,
-		model:        chatModel_3,
+		model:        chatModel_4,
 		history:      history,
 		systemPrompt: standardPropmt,
 	}
