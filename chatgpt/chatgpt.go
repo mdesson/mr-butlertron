@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/mdesson/mr-butlertron/core"
 	"gopkg.in/telebot.v3"
+	"time"
 )
 
 type ChatGPT struct {
@@ -58,9 +59,25 @@ func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 
 	prompt := tc.Text()
 
-	if err := tc.Notify(telebot.Typing); err != nil {
-		return tc.Send("Error sending typing notification")
-	}
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				fmt.Println("Hello, World!")
+				if err := tc.Notify(telebot.Typing); err != nil {
+					_ = tc.Send("Error sending typing notification")
+				}
+				time.Sleep(4 * time.Second)
+			}
+		}
+	}()
+	defer func() {
+		done <- true
+	}()
+
 	msg, err := c.client.SendMessage(prompt)
 	if err != nil {
 		fmt.Printf("error sending message: %s", err.Error())
