@@ -59,6 +59,7 @@ func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 
 	prompt := tc.Text()
 
+	// typing notification only lasts for ~5s. Send repeatedly to keep it going, will end when message is sent
 	done := make(chan bool)
 	go func() {
 		for {
@@ -66,7 +67,6 @@ func (c *ChatGPT) OnTextHandler(tc telebot.Context) error {
 			case <-done:
 				return
 			default:
-				fmt.Println("Hello, World!")
 				if err := tc.Notify(telebot.Typing); err != nil {
 					_ = tc.Send("Error sending typing notification")
 				}
